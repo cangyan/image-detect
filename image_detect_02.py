@@ -10,16 +10,19 @@ def matchAB(fileA, fileB):
     grayA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
     grayB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
 
-    akaze = cv2.AKAZE_create()
-    kpA, desA = akaze.detectAndCompute(grayA, None)
-    kpB, desB = akaze.detectAndCompute(grayB, None)
+    height, width = grayA.shape
 
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(desB, desB)
-    matches = sorted(matches, key=lambda x: x.distance)
-    matched_image = cv2.drawMatches(imgA, kpA, imgB, kpB, matches, None, flags=2)
+    result_window = np.zeros((height, width), dtype=imgA.dtype)
+    for start_y in range(0, height-100, 50):
+        for start_x in range(0, width-100, 50):
+            window = grayA[start_y:start_y+100, start_x:start_x+100]
+            match = cv2.matchTemplate(grayB, window, cv2.TM_CCOEFF_NORMED)
+            _, _, _, max_loc = cv2.minMaxLoc(match)
+            matched_window = grayB[max_loc[1]:max_loc[1]+100, max_loc[0]:max_loc[0]+100]
+            result = cv2.absdiff(window, matched_window)
+            result_window[start_y:start_y+100, start_x:start_x+100] = result
 
-    plt.imshow(cv2.cvtColor(matched_image, cv2.COLOR_BGR2RGB))
+    plt.imshow(result_window)
     plt.show()
 
 if __name__ == '__main__':
