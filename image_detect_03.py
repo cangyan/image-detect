@@ -4,17 +4,21 @@ from matplotlib import pyplot as plt
 import argparse
 
 def matchAB(fileA, fileB):
+    # 读取图像数据
     imgA = cv2.imread(fileA)
     imgB = cv2.imread(fileB)
 
+    # 转换成灰色
     grayA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
     grayB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
 
+    # 获取图片A的大小
     height, width = grayA.shape
 
+    # 取局部图像，寻找匹配位置
     result_window = np.zeros((height, width), dtype=imgA.dtype)
-    for start_y in range(0, height-100, 50):
-        for start_x in range(0, width-100, 50):
+    for start_y in range(0, height-100, 10):
+        for start_x in range(0, width-100, 10):
             window = grayA[start_y:start_y+100, start_x:start_x+100]
             match = cv2.matchTemplate(grayB, window, cv2.TM_CCOEFF_NORMED)
             _, _, _, max_loc = cv2.minMaxLoc(match)
@@ -22,7 +26,8 @@ def matchAB(fileA, fileB):
             result = cv2.absdiff(window, matched_window)
             result_window[start_y:start_y+100, start_x:start_x+100] = result
 
-    _, result_window_bin = cv2.threshold(result_window, 127, 255, cv2.THRESH_BINARY)
+    # 用四边形圈出不同部分
+    _, result_window_bin = cv2.threshold(result_window, 30, 255, cv2.THRESH_BINARY)
     _, contours, _ = cv2.findContours(result_window_bin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     imgC = imgA.copy()
     for contour in contours:
